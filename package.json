@@ -1,0 +1,8 @@
+{
+  "name": "roblock-web-prototype-v08",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

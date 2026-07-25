@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>Roblock V1.0 · 方块炮手</title>
+  <link rel="stylesheet" href="./styles.css?v=20260725v10">
+</head>
+<body>
+  <main class="game-shell" data-game-shell>
+    <header class="topbar safe-top" data-ui-background>
+      <span data-segment-label>1-1 · S1</span>
+      <div data-buff-bar aria-label="已获得强化"></div>
+      <button type="button" data-reduced-motion aria-pressed="false" aria-label="减少动态效果">◇</button>
+    </header>
+    <section class="battlefield" data-battlefield data-ui-background aria-label="断裂街口战场">
+      <strong data-countdown>备战 5</strong>
+      <div data-combat-layer></div>
+      <p class="sr-status" data-status-live role="status" aria-live="polite">消除整行或整列，为主角强化充能。</p>
+    </section>
+    <section class="production-command" data-ui-background aria-label="积木兵生产">
+      <div class="hero-perch" data-hero-perch aria-label="主角炮手"></div>
+    </section>
+    <section class="block-blast-panel safe-bottom" data-ui-background aria-label="积木拼装台">
+      <div class="board-wrap">
+        <aside data-energy-dock aria-label="棋盘消除充能进度">
+          <div data-energy-meter role="progressbar" aria-label="生产能量" aria-valuemin="0" aria-valuemax="24" aria-valuenow="0">
+            <div data-energy-grid></div>
+          </div>
+        </aside>
+        <div class="board" data-board data-rows="7" data-cols="9" aria-label="9列7行拼装棋盘"></div>
+      </div>
+      <div class="rack" data-rack aria-label="候选积木">
+        <button type="button" data-draggable data-rack-slot="0" aria-label="候选积木一"></button>
+        <button type="button" data-draggable data-rack-slot="1" aria-label="候选积木二"></button>
+        <button type="button" data-draggable data-rack-slot="2" aria-label="候选积木三"></button>
+      </div>
+    </section>
+    <div class="feedback-portal" data-feedback-layer aria-hidden="true"></div>
+    <section class="modal-overlay" data-segment-overlay hidden aria-modal="true" role="dialog">
+      <h1 data-draft-title>选择一项强化</h1>
+      <div data-draft-cards></div>
+    </section>
+    <section class="modal-overlay" data-victory-overlay hidden aria-modal="true" role="dialog">
+      <h1>1-1 胜利</h1>
+      <button type="button" data-restart>再次挑战</button>
+    </section>
+    <section class="modal-overlay" data-defeat-overlay hidden aria-modal="true" role="dialog">
+      <h1>本次远征失败</h1>
+      <button type="button" data-restart>重新挑战</button>
+    </section>
+    <div data-drag-ghost aria-hidden="true"></div>
+  </main>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
