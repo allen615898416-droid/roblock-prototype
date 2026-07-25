@@ -421,15 +421,20 @@ button:focus-visible {
 
 .block-blast-panel {
   z-index: 5;
-  flex: 0 0 auto;
+  flex: 0 1 auto;        /* allow shrink on short viewports (e.g. iPhone Safari) */
+  min-block-size: 0;     /* required for flex children to shrink below content */
+  display: flex;
+  flex-direction: column;
   background:
     linear-gradient(180deg, rgba(37, 48, 67, .98), rgba(15, 22, 34, .99));
 }
 
 .board-wrap {
-  block-size: 326px;
+  flex: 1 1 auto;        /* fill remaining vertical space */
+  min-block-size: 180px; /* keep board usable on tiny viewports */
   display: grid;
-  grid-template-rows: 34px 280px;
+  grid-template-rows: 34px minmax(0, 1fr);
+  overflow: hidden;
   place-items: center;
   gap: 6px;
   padding: 4px 0 2px;
@@ -524,6 +529,8 @@ button:focus-visible {
 }
 
 .rack {
+  flex: 0 0 68px;        /* fixed height, never shrink */
+  min-block-size: 68px;  /* safety */
   block-size: 68px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1508,7 +1515,10 @@ button:focus-visible {
   to { opacity: 1; }
 }
 
-@media (max-width: 340px) {
+@media (max-width: 400px) {
+  .battlefield {
+    min-block-size: 200px;       /* shrink battlefield on short iPhone viewports */
+  }
   .board-wrap {
     grid-template-rows: 34px minmax(0, calc(100vw - 22px));
     gap: 6px;

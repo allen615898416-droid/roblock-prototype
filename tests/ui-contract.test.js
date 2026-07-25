@@ -197,8 +197,8 @@ test('page and CSS expose the approved v1 7x9 hero-cannon hierarchy', async () =
   );
   assert.doesNotMatch(css, /\.board-shell[^{]*\{[^}]*grid-template-columns:\s*minmax\(0,\s*294px\)\s+40px/s);
   assert.match(css, /\.production-command[^{]*\{[^}]*block-size:\s*44px/s);
-  assert.match(css, /\.board-wrap[^{]*\{[^}]*block-size:\s*326px/s);
-  assert.match(css, /\.rack[^{]*\{[^}]*block-size:\s*68px/s);
+  assert.match(css, /\.board-wrap[^{]*\{[^}]*flex:\s*1 1 auto/s);
+  assert.match(css, /\.rack[^{]*\{[^}]*min-block-size:\s*68px/s);
   assert.match(css, /\.board[^{]*\{[^}]*inline-size:\s*358px/s);
   assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*inline-size:\s*358px/s);
   assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*block-size:\s*38px/s);
