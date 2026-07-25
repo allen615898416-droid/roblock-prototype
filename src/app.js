@@ -230,22 +230,33 @@ if (typeof document !== 'undefined' && typeof window !== 'undefined') {
 
   Promise.all(ASSET_PATTERNS.map(preloadImage))
     .then(() => {
-      const browserApp = createApp({
-        root: document.querySelector('[data-game-shell]'),
-        windowObject: window,
-        runtimeOptions: runtimeOptionsForWindow(window),
-      });
-      window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
-      hideLoading();
+      try {
+        const browserApp = createApp({
+          root: document.querySelector('[data-game-shell]'),
+          windowObject: window,
+          runtimeOptions: runtimeOptionsForWindow(window),
+        });
+        window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
+        hideLoading();
+      } catch (err) {
+        console.error('[Roblock] createApp failed:', err);
+        hideLoading();
+      }
     })
-    .catch(() => {
+    .catch((err) => {
       // If preload fails entirely, still start the app
-      const browserApp = createApp({
-        root: document.querySelector('[data-game-shell]'),
-        windowObject: window,
-        runtimeOptions: runtimeOptionsForWindow(window),
-      });
-      window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
-      hideLoading();
+      console.error('[Roblock] preload failed, starting anyway:', err);
+      try {
+        const browserApp = createApp({
+          root: document.querySelector('[data-game-shell]'),
+          windowObject: window,
+          runtimeOptions: runtimeOptionsForWindow(window),
+        });
+        window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
+        hideLoading();
+      } catch (err2) {
+        console.error('[Roblock] createApp failed after preload error:', err2);
+        hideLoading();
+      }
     });
 }
