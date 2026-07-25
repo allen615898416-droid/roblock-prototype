@@ -160,5 +160,13 @@ export function createFeedback(root, { reducedMotion = false } = {}) {
     superLand,
     playEvent,
     setReducedMotion: (next) => { reducedMotion = next; },
+    playPickup: () => sound({ frequency: 880, duration: 0.04, type: 'square' }),
+    playPlace: () => sound({ frequency: 220, duration: 0.08, type: 'sine' }),
+    playClear: (lineCount = 1) => {
+      const base = 560 + Math.min(lineCount - 1, 3) * 140;
+      sound({ frequency: base, duration: 0.1, type: 'triangle' });
+      setTimeout(() => sound({ frequency: base * 1.5, duration: 0.08, type: 'triangle' }), 70);
+    },
+    playInvalid: () => sound({ frequency: 140, duration: 0.12, type: 'sawtooth' }),
   };
 }

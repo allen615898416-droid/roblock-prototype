@@ -35,15 +35,19 @@ test('ordinary templates cover flexible sizes one through five for demo-friendly
     { size: 3, weight: 24 },
     { size: 4, weight: 36 },
     { size: 5, weight: 30 },
+    { size: 6, weight: 6 },   // 2x3 rectangle (Block Blast Large Rectangle)
+    { size: 9, weight: 2 },   // 3x3 big square (Block Blast Large Square)
   ]);
   assert.deepEqual(
-    Object.fromEntries([1, 2, 3, 4, 5].map((size) => [
+    Object.fromEntries([1, 2, 3, 4, 5, 6, 9].map((size) => [
       size,
       PIECE_TEMPLATES.filter((piece) => piece.cells.length === size).length > 0,
     ])),
-    { 1: true, 2: true, 3: true, 4: true, 5: true },
+    { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 9: true },
   );
-  assert.ok(PIECE_TEMPLATES.filter((piece) => piece.cells.length === 5).length >= 28);
+  assert.ok(PIECE_TEMPLATES.filter((piece) => piece.cells.length === 5).length >= 10);
+  assert.ok(PIECE_TEMPLATES.filter((piece) => piece.cells.length === 6).length === 2);
+  assert.ok(PIECE_TEMPLATES.filter((piece) => piece.cells.length === 9).length === 1);
 });
 
 test('all ordinary templates are internally connected in four directions', () => {

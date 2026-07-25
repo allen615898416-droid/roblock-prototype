@@ -140,9 +140,12 @@ export function createApp({
       anchor,
     }),
     onDrop: ({ slot, anchor }) => {
-      acceptResult(placePiece(runtime, { slot, anchor }));
+      const result = placePiece(runtime, { slot, anchor });
+      acceptResult(result);
+      return result;
     },
     renderer,
+    feedback,
   });
 
   root.addEventListener('click', (event) => {

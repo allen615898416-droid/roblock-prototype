@@ -17,8 +17,10 @@ export function createInputController({
   tryPreview,
   onDrop,
   renderer,
+  feedback,
 }) {
   const board = root.querySelector('[data-board]');
+  const ghostEl = root.querySelector('[data-ghost]') || root.querySelector('.ghost');
   const view = root.ownerDocument?.defaultView ?? globalThis.window;
   let drag = null;
 
@@ -38,13 +40,22 @@ export function createInputController({
   };
   const anchorFor = (event) => {
     const { rows, cols } = dimensions();
+    // Bottom-align: finger stays above the piece so the placement target stays visible.
+    // row offset = piece height (lowest row + 1); col offset = where the finger grabbed.
+    const pieceHeight = drag
+      ? Math.max(0, ...drag.piece.cells.map((cell) => cell.row)) + 1
+      : 1;
+    const offset = {
+      row: pieceHeight,
+      col: drag ? drag.grabOffset.col : 0,
+    };
     return PointerMapping.pointerToBoardAnchor(
       event.clientX,
       event.clientY,
       liveRect(),
       rows,
       cols,
-      drag.grabOffset,
+      offset,
     );
   };
   const draw = (event) => {
@@ -53,6 +64,8 @@ export function createInputController({
     const preview = tryPreview?.(drag.piece, anchor) || { ok: true };
     drag.anchor = anchor;
     drag.valid = preview.ok !== false;
+    // Pass willClear info to ghost so the rows/cols that will be cleared
+    // can be highlighted as a preview before the player releases.
     renderer.renderGhost({
       candidate: drag.piece,
       piece: drag.piece,
@@ -61,6 +74,8 @@ export function createInputController({
       rect: liveRect(),
       clientX: event.clientX,
       clientY: event.clientY,
+      willClearRows: preview.clearedRows || [],
+      willClearCols: preview.clearedCols || [],
     });
   };
 
@@ -122,14 +137,43 @@ export function createInputController({
       && completed.valid === true
       && completed.anchor
     );
-    cancelDrag();
+    // Capture ghost info before cancelDrag clears it
+    const ghostRect = ghostEl?.getBoundingClientRect?.();
+    const buttonRect = completed.button?.getBoundingClientRect?.();
     if (canDrop) {
-      onDrop({
+      cancelDrag();
+      const dropResult = onDrop({
         slot: completed.slot,
         candidate: completed.piece,
         piece: completed.piece,
         anchor: completed.anchor,
       });
+      // After a successful drop with clears, trigger the cell-clearing animation
+      if (dropResult && (dropResult.clearedRows?.length || dropResult.clearedCols?.length)) {
+        renderer.triggerClearing?.(
+          dropResult.clearedCells || [],
+          completed.piece.id,
+        );
+      }
+    } else if (!cancelled) {
+      // Invalid drop (out of bounds or overlap): bounce back to rack slot
+      const targetX = buttonRect ? (buttonRect.left + buttonRect.right) / 2 : null;
+      const targetY = buttonRect ? (buttonRect.top + buttonRect.bottom) / 2 : null;
+      if (targetX !== null && targetY !== null && ghostRect) {
+        // Keep ghost visible for rebound; don't clearGhost yet
+        renderer.reboundGhost?.(targetX, targetY);
+        // Clear drag state but skip clearGhost (reboundGhost handles it)
+        drag = null;
+        if (completed.button.hasPointerCapture?.(completed.pointerId)) {
+          completed.button.releasePointerCapture(completed.pointerId);
+        }
+        completed.button.setAttribute?.('aria-grabbed', 'false');
+        root.classList?.remove('is-dragging');
+      } else {
+        cancelDrag();
+      }
+    } else {
+      cancelDrag();
     }
   }
 

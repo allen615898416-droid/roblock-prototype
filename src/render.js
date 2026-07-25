@@ -126,6 +126,9 @@ export function createRenderer(root) {
     }));
   }
 
+  // Cells that are currently playing the "clear" animation. Keyed by "row:col".
+  const clearingCells = new Map();
+
   function renderBoard(snapshot = {}) {
     const rows = snapshot.rows || 7;
     const cols = snapshot.cols || 9;
@@ -135,8 +138,24 @@ export function createRenderer(root) {
     const values = snapshot.cells || Array(rows * cols).fill(null);
     $$(board, '.board-cell').forEach((cell, index) => {
       const value = values[index];
+      const prevKey = cell.dataset.clearKey || '';
+      const valueKey = value ? (value.id ?? value) : '';
+      // Preserve clearing state: if the cell was animating a clear and the underlying
+      // value has now been removed, keep the visual for the animation duration.
+      const wasClearing = cell.classList.contains('clearing');
       cell.className = 'board-cell';
       cell.replaceChildren();
+      if (wasClearing && (value === null || value === undefined || value === false)) {
+        const key = prevKey || valueKey;
+        // Restart clear animation
+        cell.classList.add('clearing', `block-${clearingCells.get(key) || 'purple'}`);
+        // schedule cleanup
+        setTimeout(() => {
+          cell.classList.remove('clearing');
+          clearingCells.delete(key);
+        }, 320);
+        return;
+      }
       if (value === null || value === undefined || value === false) return;
       const color = pieceColor({ id: value }, index);
       cell.classList.add('occupied', `block-${color}`);
@@ -145,6 +164,29 @@ export function createRenderer(root) {
       mark.className = 'block-stud';
       mark.setAttribute('aria-hidden', 'true');
       cell.append(mark);
+    });
+  }
+
+  // Called by input-controller when a placement clears cells. Each cleared cell
+  // is given a "clearing" class + its piece color so it can play cell-clearing
+  // animation before the next render cycle wipes it out.
+  function triggerClearing(clearedCells = [], placedPieceId = null) {
+    const colorClass = placedPieceId ? pieceColor({ id: placedPieceId }) : 'purple';
+    const geometry = measureBoardGeometry(board, root);
+    if (!geometry) return;
+    clearedCells.forEach(({ row, col }) => {
+      const cols = Number(board.dataset.cols) || 9;
+      const cellIndex = row * cols + col;
+      const cellEl = $$(board, '.board-cell')[cellIndex];
+      if (!cellEl) return;
+      const key = `${row}:${col}`;
+      cellEl.dataset.clearKey = key;
+      clearingCells.set(key, colorClass);
+      cellEl.classList.add('clearing', `block-${colorClass}`);
+      setTimeout(() => {
+        cellEl.classList.remove('clearing');
+        clearingCells.delete(key);
+      }, 320);
     });
   }
 
@@ -753,17 +795,27 @@ export function createRenderer(root) {
     }
   }
 
-  function renderGhost({ candidate, piece, anchor, valid = true } = {}) {
+  function renderGhost({
+    candidate,
+    piece,
+    anchor,
+    valid = true,
+    willClearRows = [],
+    willClearCols = [],
+  } = {}) {
     const source = piece || candidate;
     if (!source || !anchor) {
       clearGhost();
+      clearWillClear();
       return;
     }
     const geometry = measureBoardGeometry(board, root);
     if (!geometry) {
       clearGhost();
+      clearWillClear();
       return;
     }
+    // 1. Draw the ghost piece as before
     const sourceCells = cellsFor(source);
     ghost.replaceChildren(...sourceCells.map((cell) => {
       const block = doc.createElement('i');
@@ -778,11 +830,70 @@ export function createRenderer(root) {
     ghost.style.setProperty('top', `${geometry.top + anchor.row * geometry.stepY}px`);
     ghost.classList.add('active');
     ghost.classList.toggle('invalid', !valid);
+
+    // 2. Highlight will-clear rows/cols (preview feedback)
+    applyWillClear(willClearRows, willClearCols, geometry, valid);
+  }
+
+  // Track highlighted will-clear cells so we can wipe them on next call.
+  let willClearCells = [];
+
+  function clearWillClear() {
+    willClearCells.forEach((el) => el.classList.remove('will-clear'));
+    willClearCells = [];
+  }
+
+  function applyWillClear(rows, cols, geometry, valid) {
+    clearWillClear();
+    if (!rows.length && !cols.length) return;
+    const cells = $$(board, '.board-cell');
+    const boardCols = Number(board.dataset.cols) || 9;
+    const boardRows = Number(board.dataset.rows) || 7;
+    const highlight = (idx) => {
+      const el = cells[idx];
+      if (el) {
+        el.classList.add('will-clear');
+        willClearCells.push(el);
+      }
+    };
+    rows.forEach((row) => {
+      for (let c = 0; c < boardCols; c += 1) highlight(row * boardCols + c);
+    });
+    cols.forEach((col) => {
+      for (let r = 0; r < boardRows; r += 1) highlight(r * boardCols + col);
+    });
   }
 
   function clearGhost() {
     ghost.classList.remove('active', 'invalid');
     ghost.replaceChildren();
+    clearWillClear();
+  }
+
+  // Bounce-back animation when an invalid drop happens.
+  // The ghost flies toward (toX, toY) and fades out, simulating the piece
+  // returning to its rack slot.
+  function reboundGhost(toX, toY) {
+    if (!ghost.classList.contains('active')) {
+      clearGhost();
+      return;
+    }
+    // Preserve current ghost visual but add "rebounding" class + transition
+    ghost.classList.add('rebounding');
+    ghost.classList.remove('invalid');
+    ghost.style.setProperty('left', `${toX}px`);
+    ghost.style.setProperty('top', `${toY}px`);
+    const cleanup = () => {
+      ghost.removeEventListener('transitionend', cleanup);
+      ghost.classList.remove('rebounding');
+      clearGhost();
+    };
+    ghost.addEventListener('transitionend', cleanup);
+    // Fallback: ensure cleanup after 300ms even if transitionend doesn't fire
+    setTimeout(() => {
+      ghost.classList.remove('rebounding');
+      clearGhost();
+    }, 320);
   }
 
   function render(view = {}) {
@@ -858,6 +969,8 @@ export function createRenderer(root) {
     render,
     renderGhost,
     clearGhost,
+    reboundGhost,
+    triggerClearing,
     setStatus(message = '') { status.textContent = message; },
   };
 }

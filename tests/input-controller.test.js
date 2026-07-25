@@ -121,8 +121,11 @@ test('drag uses the grabbed cell and measured DOM geometry for preview and drop'
   harness.listeners.get('pointermove')(event);
   harness.listeners.get('pointerup')(event);
 
-  assert.deepEqual(previews.at(-1).anchor, { row: 3, col: 2 });
-  assert.deepEqual(drops[0].anchor, { row: 3, col: 2 });
+  // With bottom-align: grabOffset.row is replaced by pieceHeight (=2 for an
+  // L-shaped piece whose lowest row is 1). Raw finger row is 4, so anchor.row
+  // = 4 - 2 = 2.
+  assert.deepEqual(previews.at(-1).anchor, { row: 2, col: 2 });
+  assert.deepEqual(drops[0].anchor, { row: 2, col: 2 });
   assert.equal(drops[0].slot, 1);
   assert.equal(ghosts.at(-1), 'cleared');
   controller.destroy();
@@ -145,7 +148,9 @@ test('half-scale measured board produces the same logical drop anchor', () => {
   });
   harness.listeners.get('pointerdown')(event);
   harness.listeners.get('pointerup')(event);
-  assert.deepEqual(drops[0].anchor, { row: 3, col: 2 });
+  // Bottom-align: piece is 2 rows tall (cells 0,0 and 1,1), so anchor.row
+  // = raw_finger_row(=4) - 2 = 2.
+  assert.deepEqual(drops[0].anchor, { row: 2, col: 2 });
 });
 
 test('visible modal isolates gameplay pointer input', () => {
