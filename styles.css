@@ -6,6 +6,51 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* === Loading overlay (shown until all PNG assets are preloaded) === */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #070b12;
+  color: #f7fbff;
+  transition: opacity 400ms ease;
+}
+
+.loading-overlay.is-ready {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(120, 160, 220, .2);
+  border-top-color: #5e94e3;
+  border-radius: 50%;
+  animation: loading-spin 800ms linear infinite;
+}
+
+.loading-text {
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: rgba(247, 251, 255, .6);
+  margin: 0;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+.game-shell.reduced-motion .loading-spinner {
+  animation: none;
+  border-top-color: rgba(120, 160, 220, .4);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -431,19 +476,19 @@ button:focus-visible {
 
 .board-wrap {
   flex: 1 1 auto;        /* fill remaining vertical space */
-  min-block-size: 180px; /* keep board usable on tiny viewports */
-  display: grid;
-  grid-template-rows: 34px minmax(0, 1fr);
-  overflow: hidden;
-  place-items: center;
+  min-block-size: 0;     /* allow board to shrink below content size */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 6px;
   padding: 4px 0 2px;
 }
 
 [data-energy-dock] {
   position: relative;
-  inline-size: 358px;
-  block-size: 38px;
+  flex: 0 0 34px;         /* fixed 34px, never shrink */
+  inline-size: 100%;
+  max-inline-size: 358px;
   padding: 4px;
   border: 1px solid rgba(188, 211, 236, .22);
   border-radius: 16px;
@@ -480,8 +525,12 @@ button:focus-visible {
 }
 
 .board {
-  inline-size: 358px;
-  block-size: 280px;
+  flex: 1 1 auto;
+  min-block-size: 0;        /* required so aspect-ratio doesn't blow out parent */
+  inline-size: 100%;
+  max-inline-size: 358px;
+  max-block-size: 100%;     /* cap height to whatever board-wrap gives us */
+  aspect-ratio: 9 / 7;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-template-rows: repeat(7, 1fr);
@@ -1520,18 +1569,8 @@ button:focus-visible {
     min-block-size: 200px;       /* shrink battlefield on short iPhone viewports */
   }
   .board-wrap {
-    grid-template-rows: 34px minmax(0, calc(100vw - 22px));
+    grid-template-rows: 34px minmax(0, 1fr);
     gap: 6px;
-  }
-
-  .board {
-    inline-size: min(358px, calc(100vw - 22px));
-    block-size: min(280px, calc(100vw - 22px));
-  }
-
-  [data-energy-dock] {
-    inline-size: min(358px, calc(100vw - 22px));
-    block-size: 34px;
   }
 
   .production-command {

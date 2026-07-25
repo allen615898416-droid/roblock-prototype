@@ -199,9 +199,11 @@ test('page and CSS expose the approved v1 7x9 hero-cannon hierarchy', async () =
   assert.match(css, /\.production-command[^{]*\{[^}]*block-size:\s*44px/s);
   assert.match(css, /\.board-wrap[^{]*\{[^}]*flex:\s*1 1 auto/s);
   assert.match(css, /\.rack[^{]*\{[^}]*min-block-size:\s*68px/s);
-  assert.match(css, /\.board[^{]*\{[^}]*inline-size:\s*358px/s);
-  assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*inline-size:\s*358px/s);
-  assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*block-size:\s*38px/s);
+  assert.match(css, /\.board[^{]*\{[^}]*inline-size:\s*100%/s);
+  assert.match(css, /\.board[^{]*\{[^}]*aspect-ratio:\s*9 \/ 7/s);
+  assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*inline-size:\s*100%/s);
+  assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*max-inline-size:\s*358px/s);
+  assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*flex:\s*0 0 34px/s);
   assert.match(css, /\[data-energy-dock\][^{]*\{[^}]*position:\s*relative/s);
   assert.match(css, /\[data-energy-meter\]::after/);
   assert.match(css, /\[data-energy-grid\][^{]*\{[^}]*grid-template-columns:\s*repeat\(24,\s*1fr\)/s);

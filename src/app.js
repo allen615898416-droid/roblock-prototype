@@ -202,10 +202,50 @@ export function runtimeOptionsForWindow(windowObject = {}) {
 }
 
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
-  const browserApp = createApp({
-    root: document.querySelector('[data-game-shell]'),
-    windowObject: window,
-    runtimeOptions: runtimeOptionsForWindow(window),
-  });
-  window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
+  // Preload all PNG assets before showing the main view.
+  const ASSET_PATTERNS = [
+    './assets/enemies/png/chr_enm_grunt_body.png',
+    './assets/enemies/png/chr_enm_runner_body.png',
+    './assets/enemies/png/chr_enm_heavy_body.png',
+    './assets/enemies/png/chr_enm_swarm_body.png',
+    './assets/generated/commander.png',
+    './assets/static/level-1-1-broken-street.png',
+  ];
+
+  function preloadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(src);
+      img.onerror = () => resolve(src); // resolve anyway, don't block startup
+      img.src = src;
+    });
+  }
+
+  function hideLoading() {
+    const overlay = document.querySelector('[data-loading]');
+    if (!overlay) return;
+    overlay.classList.add('is-ready');
+    setTimeout(() => overlay.remove(), 500);
+  }
+
+  Promise.all(ASSET_PATTERNS.map(preloadImage))
+    .then(() => {
+      const browserApp = createApp({
+        root: document.querySelector('[data-game-shell]'),
+        windowObject: window,
+        runtimeOptions: runtimeOptionsForWindow(window),
+      });
+      window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
+      hideLoading();
+    })
+    .catch(() => {
+      // If preload fails entirely, still start the app
+      const browserApp = createApp({
+        root: document.querySelector('[data-game-shell]'),
+        windowObject: window,
+        runtimeOptions: runtimeOptionsForWindow(window),
+      });
+      window.__ROBLOCK_RUNTIME__ = browserApp.bridge;
+      hideLoading();
+    });
 }
