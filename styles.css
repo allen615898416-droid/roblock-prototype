@@ -1316,6 +1316,15 @@ button:focus-visible {
   border-radius: 12px;
   background: #25344b;
   text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, .08);
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
+.draft-card:disabled {
+  opacity: .4;
+  cursor: not-allowed;
 }
 
 .draft-card span {

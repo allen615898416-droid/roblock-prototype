@@ -51,7 +51,11 @@ function createRuntimeView(state, events = state.events, combatEvents = []) {
     draft: {
       active: state.phase === 'draft',
       cards: draft?.cards || [],
-      locked: Boolean(draft?.selectedCardId),
+      // Only mark locked when draft is finalized (a card has been selected AND
+      // we're no longer in 'draft' phase showing the modal). This prevents
+      // a stale selectedCardId from a previous round from disabling the next
+      // round's draft buttons.
+      locked: Boolean(draft?.selectedCardId) && state.phase !== 'draft',
     },
     victory: state.phase === 'victory',
     defeat: state.phase === 'defeat',
@@ -151,6 +155,13 @@ export function createApp({
   root.addEventListener('click', (event) => {
     const draftButton = event.target.closest('[data-draft-card]');
     if (draftButton) {
+      console.log('[Roblock] draft click', {
+        cardId: draftButton.dataset.draftCard,
+        btnDisabled: draftButton.disabled,
+        phase: runtime.phase,
+        expPhase: runtime.expedition.phase,
+        draftSel: runtime.expedition.draft?.selectedCardId,
+      });
       acceptResult(
         selectCard(runtime, draftButton.dataset.draftCard),
         '强化已装配，准备下一战段。',
